@@ -17,7 +17,7 @@ def rename_file(old_name, new_name):
 # Read or create the configuration file
 try:
     with open("禁用助手配置文件.txt", "x", encoding="utf-8") as f:
-        f.writelines(['\\\\\t使用说明\n', '\\\\\t"\\\\"开始为注释(为啥配置文件要注释?)\n', '\\\\\t"."开始为直接输出，最后一个会读取输入\n', '\\\\\t类似"input$file"的内容为\n', '\\\\\t"^"为同时操作的文件\n', '\n', '\n', '.禁用助手 Beta 2.1 - LIB临时工作室出品\n', '.---------------------------------\n', '.使用方法\n', '.- 输入功能前面的数字然后按回车\n', '.---------------------------------\n', '.功能列表:\n', '.1\t开关重锤\n', '1$assets\\minecraft\\models\\item\\mace.json\n', '.2\t开关泥土类\n', '2$assets\\minecraft\\blockstates\\podzol.json\n', '^assets\\minecraft\\blockstates\\dirt_path.json\n', '^assets\\minecraft\\blockstates\\grass_block.json\n', '^assets\\minecraft\\blockstates\\mycelium.json\n', '.3\t开关枯木白骨\n', '3$assets\\minecraft\\blockstates\\dead_bush.json\n', '^assets\\minecraft\\models\\block\\dead_bush1.json\n', '^assets\\minecraft\\models\\block\\dead_bush2.json\n', '^assets\\minecraft\\models\\block\\dead_bush3.json\n', '.---------------------------------\n', '.选择功能:'])
+        f.writelines(['\\\\\t使用说明\n', '\\\\\t"\\\\"开始为注释(为啥配置文件要注释?)\n', '\\\\\t"."开始为直接输出，最后一个会读取输入\n', '\\\\\t类似"input$file"的内容为\n', '\\\\\t"^"为同时操作的文件\n', '\n', '\n', '.禁用助手 Beta 2.1.1 - LIB临时工作室出品\n', '.---------------------------------\n', '.使用方法\n', '.- 输入功能前面的数字然后按回车\n', '.---------------------------------\n', '.功能列表:\n', '.1\t开关重锤\n', '1$assets\\minecraft\\models\\item\\mace.json\n', '.2\t开关泥土类\n', '2$assets\\minecraft\\blockstates\\podzol.json\n', '^assets\\minecraft\\blockstates\\dirt_path.json\n', '^assets\\minecraft\\blockstates\\grass_block.json\n', '^assets\\minecraft\\blockstates\\mycelium.json\n', '.3\t开关枯木白骨\n', '3$assets\\minecraft\\blockstates\\dead_bush.json\n', '^assets\\minecraft\\models\\block\\dead_bush1.json\n', '^assets\\minecraft\\models\\block\\dead_bush2.json\n', '^assets\\minecraft\\models\\block\\dead_bush3.json\n', '.---------------------------------\n', '.选择功能:'])
 except FileExistsError:
     pass
 
@@ -28,7 +28,7 @@ with open("禁用助手配置文件.txt", "r", encoding="utf-8") as f:
 clear_screen()
 
 input_prompt = ""
-last_key_add = ""
+last_key_add = "\n"
 display_data = []
 file_data = {}
 
@@ -39,8 +39,8 @@ for line in range(len(rawdata)):
         display_data.append(display)
     elif "^" in rawdata[line][0]:
         file = rawdata[line].split("^")[-1][:-1]
-        if get_input not in file_data:
-            input(f"[错误] 配置文件第{line + 1}行错误, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n识别的内容: {get_input}${file}\n\n尝试删除配置文件可能会解决此问题")
+        if last_key_add == "\n":
+            input(f"[错误] 配置文件第{line + 1}行错误, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n识别的内容:\n^{file}\n\n尝试删除配置文件可能会解决此问题")
             exit()
         file_data[last_key_add].append(file)
     elif rawdata[line][:1] == "\\" or rawdata[line][:1] == "\n":
