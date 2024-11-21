@@ -1,9 +1,11 @@
 import os
 
 def clear_screen():
+    """Clears the console screen."""
     os.system("cls")
 
 def rename_file(old_name, new_name):
+    """Renames a file and handles potential errors."""
     try:
         os.rename(old_name, new_name)
         print(f"[提示] 已重命名文件至 {new_name}")
@@ -14,71 +16,86 @@ def rename_file(old_name, new_name):
     except Exception as e:
         print(f"[错误] 未知错误: {e}")
 
-# Read or create the configuration file
-try:
-    with open("禁用助手配置文件.txt", "x", encoding="utf-8") as f:
-        f.writelines(['\\\\\t\t    使用说明\n', '\\\\\n', '\\\\\t"\\\\"开始为注释(为啥配置文件要注释?)\n', '\\\\\t"."开始为直接输出，最后一个"."为读取输入\n', '\\\\\t类似"input$file"的内容为声明操作\n', '\\\\\t当输入"$"前面的内容时操作"$"后面的文件\n', '\\\\\t"$"的内容下面的"^"为同时操作的文件\n', '\\\\\t\t哦对了, 还有op~~~\n', '\n', '\n', '.禁用助手 Beta 2.1.2 - LIB临时工作室出品\n', '.---------------------------------\n', '.使用方法\n', '.- 输入功能前面的数字然后按回车\n', '.---------------------------------\n', '.功能列表:\n', '.1\t开关重锤\n', '1$assets\\minecraft\\models\\item\\mace.json\n', '\n', '.2\t开关泥土类\n', '2$assets\\minecraft\\blockstates\\podzol.json\n', '^assets\\minecraft\\blockstates\\dirt_path.json\n', '^assets\\minecraft\\blockstates\\grass_block.json\n', '^assets\\minecraft\\blockstates\\mycelium.json\n', '\n', '.3\t开关枯木白骨\n', '3$assets\\minecraft\\blockstates\\dead_bush.json\n', '^assets\\minecraft\\models\\block\\dead_bush1.json\n', '^assets\\minecraft\\models\\block\\dead_bush2.json\n', '^assets\\minecraft\\models\\block\\dead_bush3.json\n', '.---------------------------------\n', '.选择功能:'])
-except FileExistsError:
-    pass
-
-# Read the configuration file
-with open("禁用助手配置文件.txt", "r", encoding="utf-8") as f:
-    rawdata = f.readlines()
-
-clear_screen()
-
-input_prompt = ""
-last_key_add = "\n"
-display_data = []
-file_data = {}
-
-# Process configuration file
-for line in range(len(rawdata)):
-    if rawdata[line][0] == ".":
-        display = rawdata[line][1:]
-        display_data.append(display)
-    elif "^" in rawdata[line][0]:
-        file = rawdata[line].split("^")[-1][:-1]
-        if last_key_add == "\n":
-            input(f"[错误] 配置文件第{line + 1}行错误, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n识别的内容:\n^{file}\n\n尝试删除配置文件可能会解决此问题")
-            exit()
-        file_data[last_key_add].append(file)
-    elif rawdata[line][:1] == "\\" or rawdata[line][:1] == "\n":
+def create_default_config():
+    """Creates a default configuration file if it doesn't exist."""
+    config_content = ['\\\\\t\t\t\t使用说明\n', '\\\\\t"\\\\"开始为注释\n', '\\\\\t"."开始为直接输出，最后一个"."为读取输入\n', '\\\\\t输入"$"前的内容进行操作，操作"$"后的文件\n', '\\\\\t"$"后的文件下一行以"^"开头表示同时操作的文件\n', '\\\\\t"+"可以设置目录前缀，如果"+"后为空那么清空前缀\n', '\\\\\n', '\\\\\t所有闪退均为bug\n', '\\\\\t如发现请在https://pd.qq.com/s/1d83nni17\n', '\\\\\t@指令小蛇_Cbscfe\n', '\\\\\t程序出现问题如修改配置文件需一并发送\n', '\\\\\n', '\\\\\t做GUI之前永远Beta!!!\n', '\\\\\t\t\t\t\t\t----(一个一个不会用tkinter的人)\n', '\n', '+assets\\minecraft\\models\\item\\\n', '1$mace.json\n', '\n', '+assets\\minecraft\\blockstates\\\n', '2$podzol.json\n', '^dirt_path.json\n', '^grass_block.json\n', '^mycelium.json\n', '\n', '+assets\\minecraft\\blockstates\\\n', '3$dead_bush.json\n', '+assets\\minecraft\\models\\block\\\n', '^dead_bush1.json\n', '^dead_bush2.json\n', '^dead_bush3.json\n', '\n', '.禁用助手 Beta 2.1.3 - LIB临时工作室出品\n', '.---------------------------------\n', '.使用方法\n', '.- 输入功能前面的数字然后按回车\n', '.---------------------------------\n', '.功能列表:\n', '.1\t开关重锤\n', '.2\t开关泥土类\n', '.3\t开关枯木白骨\n', '.---------------------------------\n', '.选择功能:']
+    try:
+        with open("禁用助手配置文件.txt", "x", encoding="utf-8") as f:
+            f.writelines(config_content)
+    except FileExistsError:
         pass
-    elif "$" in rawdata[line]:
-        get_input = rawdata[line].split("$")[0]
-        file = rawdata[line].split("$")[-1][:-1]
-        if f"{get_input}${file}\n" != rawdata[line]:
-            input(f"[错误] 配置文件第{line + 1}行错误, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n识别的内容: {get_input}${file}\n\n尝试删除配置文件可能会解决此问题")
-            exit()
+
+def parse_config():
+    """Parses the configuration file into a dictionary and a display list."""
+    with open("禁用助手配置文件.txt", "r", encoding="utf-8") as f:
+        raw_data = f.readlines()
+
+    display_data = []
+    file_data = {}
+    current_key = None
+    file_prefix = ""
+
+    for line_num, line in enumerate(raw_data, start=1):
+        line = line.strip()
+        if not line or line.startswith("\\"):
+            continue  # Skip empty or comment lines
+        if line.startswith("."):
+            display_data.append(line[1:] + "\n")
+        elif line.startswith("+"):
+            file_prefix = line[1:].strip()
+        elif "$" in line:
+            try:
+                key, file = line.split("$", 1)
+                key = key.strip()
+                file = file_prefix + file.strip()
+                if key not in file_data:
+                    file_data[key] = []
+                file_data[key].append(file)
+                current_key = key
+            except ValueError:
+                raise ValueError(f"[错误] 配置文件第{line_num}行格式错误: {line}")
+        elif line.startswith("^"):
+            if not current_key:
+                raise ValueError(f"[错误] 配置文件第{line_num}行没有主键用于关联: {line}")
+            file = file_prefix + line[1:].strip()
+            file_data[current_key].append(file)
         else:
-            if get_input not in file_data:
-                file_data[get_input] = []
-            file_data[get_input].append(file)
-            last_key_add = get_input
-    else:
-        input(f"[错误] 配置文件第{line + 1}行无法识别, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n尝试删除配置文件可能会解决此问题")
+            raise ValueError(f"[错误] 配置文件第{line_num}行无法识别: {line}")
+
+    return display_data, file_data
+
+def main():
+    """Main function to drive the program."""
+    create_default_config()
+    try:
+        display_data, file_data = parse_config()
+    except Exception as e:
+        input(f"{e}")
         exit()
 
-# Set prompt for user input
-input_prompt = display_data.pop(-1)[:]
+    input_prompt = display_data.pop(-1)[:-1]
 
-# Main loop to process user input
-while True:
-    for dis in display_data:
-        print(dis, end="")
-    inp = input(input_prompt)
+    while True:
+        clear_screen()
+        for line in display_data:
+            print(line, end="")
+        user_input = input(input_prompt)
+        enabled_files_cnt = 0
+        disabled_files_cnt = 0
 
-    if inp in file_data:
-        for file in file_data[inp]:
-            if os.path.exists(file):
-                rename_file(file, file + ".disabled")
-            elif os.path.exists(file + ".disabled"):
-                rename_file(file + ".disabled", file)
-            else:
-                print(f"[错误] 文件不存在{file}")
-        input()
-        clear_screen()
-    else:
-        input("无效输入，请重新选择功能。")
-        clear_screen()
+        if user_input in file_data:
+            for file in file_data[user_input]:
+                if os.path.exists(file):
+                    rename_file(file, file + ".disabled")        
+                    disabled_files_cnt += 1
+                elif os.path.exists(file + ".disabled"):
+                    rename_file(file + ".disabled", file)
+                    enabled_files_cnt += 1
+                else:
+                    print(f"[错误] 文件不存在: {file}")
+            input(f"[提示] 操作完成，启用了{enabled_files_cnt}个文件，禁用了{disabled_files_cnt}个文件。按回车继续...")
+        else:
+            input("[提示] 无效输入，请重试...")
+
+if __name__ == "__main__":
+    main()
