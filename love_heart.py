@@ -1,150 +1,110 @@
-# 版权https://github.com/royalneverwin/beating-heart
+import os
 
-from tkinter import * # Python 实现GUI界面的包
-from math import sin, cos, pi, log
-import random
-import time
+def clear_screen():
+    os.system("cls")
 
-CANVAS_WIDTH = 640
-CANVAS_HEIGHT = 480
-CANVAS_CENTER_X = CANVAS_WIDTH / 2
-CANVAS_CENTER_Y = CANVAS_HEIGHT / 2
-IMAGE_ENLARGE = 11
+def rename_file(old_name, new_name):
+    try:
+        os.rename(old_name, new_name)
+        print(f"[提示] 已重命名文件至 {new_name}")
+    except FileNotFoundError:
+        print(f"[错误] 文件未找到: {old_name}")
+    except PermissionError:
+        print(f"[错误] 无法重命名文件，权限被拒绝: {old_name}")
+    except Exception as e:
+        print(f"[错误] 未知错误: {e}")
 
+# Read or create the configuration file
+try:
+    with open("禁用助手配置文件.txt", "x", encoding="utf-8") as f:
+        f.writelines([
+            "\\\\\t使用说明\n",
+            "\\\\\t\"\\\\\"开始为注释(为啥配置文件要注释?)\n",
+            "\\\\\t\".\"开始为直接输出\n",
+            "\\\\\t类似\"a!b$c\"的内容为\n",
+            "\\\\\t\"^\"第二为\n",
+            "\n",
+            "\n",
+            ".禁用助手 Beta 2.0 - LIB临时工作室出品\n",
+            ".---------------------------------\n",
+            ".使用方法\n",
+            ".- 输入功能前面的数字然后按回车\n",
+            ".---------------------------------\n",
+            ".功能列表:\n",
+            "1!1\t开关重锤$assets\\minecraft\\models\\item\\mace.json\n",
+            "2!2\t开关泥土类$assets\\minecraft\\blockstates\\podzol.json\n",
+            "\n",
+            "2^assets\\minecraft\\blockstates\\dirt_path.json\n",
+            "2^assets\\minecraft\\blockstates\\grass_block.json\n",
+            "2^assets\\minecraft\\blockstates\\mycelium.json\n",
+            "\n",
+            "3!3\t开关枯木白骨$assets\\minecraft\\blockstates\\dead_bush.json\n"
+            "3^assets\\minecraft\\models\\block\\dead_bush1.json\n"
+            "3^assets\\minecraft\\models\\block\\dead_bush2.json\n"
+            "3^assets\\minecraft\\models\\block\\dead_bush3.json\n"
+            ".---------------------------------\n",
+            ".选择功能:"
+        ])
+except FileExistsError:
+    pass
 
-def scatter_inside(x, y, beta=0.15): # log scatter & scatter inside
-    ratiox = - beta * log(random.random()) #*** can modify ***#
-    ratioy = - beta * log(random.random())
-    dx = ratiox * (x - CANVAS_CENTER_X)
-    dy = ratioy * (y - CANVAS_CENTER_Y)
-    return x - dx, y - dy
+# Read the configuration file
+with open("禁用助手配置文件.txt", "r", encoding="utf-8") as f:
+    rawdata = f.readlines()
 
+clear_screen()
 
-def heart_function(t, enlarge_ratio: float = IMAGE_ENLARGE):
-    # heart function
-    x = 16 * (sin(t)**3)
-    y = -(13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t))
+input_prompt = ""
+display_data = []
+file_data = {}
 
-    # enlarge
-    x *= enlarge_ratio
-    y *= enlarge_ratio
+# Process configuration file
+for line in range(len(rawdata)):
+    if rawdata[line][0] == ".":
+        display = rawdata[line][1:]
+        display_data.append(display)
+    elif rawdata[line][:1] == "\\" or rawdata[line][:1] == "\n":
+        pass
+    elif "^" in rawdata[line][1:]:
+        file = rawdata[line].split("^")[-1][:-1]
+        get_input = rawdata[line].split("^")[0]
+        if get_input not in file_data:
+            file_data[get_input] = []
+        file_data[get_input].append(file)
+    elif "!" in rawdata[line] and "$" in rawdata[line]:
+        get_input = rawdata[line].split("!")[0]
+        display = rawdata[line].split("!")[-1].split("$")[0]
+        file = rawdata[line].split("$")[-1][:-1]
+        if f"{get_input}!{display}${file}\n" != rawdata[line]:
+            input(f"[错误] 配置文件第{line + 1}行错误, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n识别的内容: {get_input}!{display}${file}\n\n尝试删除配置文件可能会解决此问题")
+            exit()
+        else:
+            if get_input not in file_data:
+                file_data[get_input] = []
+            file_data[get_input].append(file)
+            display_data.append(display + "\n")
+    else:
+        input(f"[错误] 配置文件第{line + 1}行无法识别, 错误的内容\n\n{rawdata[line]}\n文件内容: {rawdata}\n显示内容: {display_data}\n文件数据: {file_data}\n\n尝试删除配置文件可能会解决此问题")
 
-    # shift to the center of canvas
-    x += CANVAS_CENTER_X
-    y += CANVAS_CENTER_Y
+# Set prompt for user input
+input_prompt = display_data.pop(-1)[:]
 
-    return int(x), int(y)
+# Main loop to process user input
+while True:
+    for dis in display_data:
+        print(dis, end="")
+    inp = input(input_prompt)
 
-def shrink(x, y, ratio):
-    sk_range = -1 / ((x-CANVAS_CENTER_X) ** 2 + (y-CANVAS_CENTER_Y) ** 2)
-    dx = ratio * sk_range * (x-CANVAS_CENTER_X)
-    dy = ratio * sk_range * (y-CANVAS_CENTER_Y)
-    return x - dx, y - dy
-
-
-class Heart:
-    def __init__(self, frame):
-        self.points = set()
-        self.edge_points = set()
-        self.inside_points = set()
-        self.all_points = {}
-        self.build(2000) #*** can modify ***#
-        self.frame = frame
-        for f in range(frame):  # pre calculate
-            self.calc(f)
-
-        # for halo
-        self.random_halo = 1000
-
-
-
-    def build(self, number):
-        # randomly find 'number' points on the heart curve
-        for _ in range(number):
-            t = random.uniform(0, 2 * pi) # t = angle
-            x, y = heart_function(t)
-            x, y = shrink(x, y, -1000)
-            self.points.add((int(x), int(y)))
-
-        # randomly find points on the edge
-        for px, py in self.points:
-            for _ in range(3): #*** can modify ***#
-                x, y = scatter_inside(px, py, 0.05) #*** can modify ***#
-                self.edge_points.add((x, y))
-
-        # randomly find points inside the heart
-        pt_ls = list(self.points)
-        for _ in range(4000): #*** can modify ***#
-            x, y = random.choice(pt_ls) # choice need idx, and set has no idx, only list has
-            x, y = scatter_inside(x, y) #*** can modify ***#
-            self.inside_points.add((x, y))
-
-
-    def cal_position(self, x, y, ratio): # calculate the position of points when beating
-        # attention: the closer to the center, the bigger beating range point has
-        bt_range = 1 / ((x-CANVAS_CENTER_X) ** 2 + (y-CANVAS_CENTER_Y) ** 2)
-        dx = ratio * bt_range * (x-CANVAS_CENTER_X) + random.randint(-1, 1)
-        dy = ratio * bt_range * (y-CANVAS_CENTER_Y) + random.randint(-1, 1)
-        return x - dx, y - dy
-
-
-    def calc(self, frame): # calculate points' position for different frame
-        ratio = 800 * sin(frame / 10 * pi) #*** can modify ***# this is 30 fps
-        all_pts = []
-
-        # for halo
-        halo_radius = int(4 + 6 * (1 + sin(self.frame / 10 * pi)))
-        halo_number = int(3000 + 4000 * abs(sin(self.frame / 10 * pi) ** 2))
-        heart_halo_point = set()
-        for _ in range(halo_number):
-            t = random.uniform(0, 2 * pi)
-            x, y = heart_function(t, enlarge_ratio=11.6)
-            x, y = shrink(x, y, halo_radius)
-            if (x, y) not in heart_halo_point:
-                # 处理新的点
-                heart_halo_point.add((x, y))
-                x += random.randint(-14, 14)
-                y += random.randint(-14, 14)
-                size = random.choice((1, 2, 2))
-                all_pts.append((x, y, size))
-
-        # on the curve
-        for x, y in self.points:
-            x, y = self.cal_position(x, y, ratio)
-            size = random.randint(1, 3) #*** can modify ***#
-            all_pts.append((x, y, size))
-
-        # on the edge
-        for x, y in self.edge_points:
-            x, y = self.cal_position(x, y, ratio)
-            size = random.randint(1, 2) #*** can modify ***#
-            all_pts.append((x, y, size))
-
-        # inside
-        for x, y in self.inside_points:
-            x, y = self.cal_position(x, y, ratio)
-            size = random.randint(1, 2) #*** can modify ***#
-            all_pts.append((x, y, size))
-
-        self.all_points[frame] = all_pts
-
-
-    def render(self, canvas, frame): # draw points
-        for x, y, size in self.all_points[frame % self.frame]: # set operation
-            canvas.create_rectangle(x, y, x+size, y+size, width=0, fill='#ff7171')
-
-
-def draw(root: Tk, canvas: Canvas, heart: Heart, frame=0):
-    canvas.delete('all')
-    heart.render(canvas, frame)
-    root.after(30, draw, root, canvas, heart, frame+1)
-
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title('漂亮宝贝一周年快乐')
-    canvas = Canvas(root, bg='black', height=CANVAS_HEIGHT, width=CANVAS_WIDTH)
-    canvas.pack()
-    heart = Heart(20)
-    draw(root, canvas, heart)
-    root.mainloop()
+    if inp in file_data:
+        for file in file_data[inp]:
+            if os.path.exists(file):
+                rename_file(file, file + ".disabled")
+            elif os.path.exists(file + ".disabled"):
+                rename_file(file + ".disabled", file)
+            else:
+                print(f"[错误] 文件不存在{file}")
+        input()
+        clear_screen()
+    else:
+        input("无效输入，请重新选择功能。")
+        clear_screen()
