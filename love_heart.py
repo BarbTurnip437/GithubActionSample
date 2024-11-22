@@ -8,13 +8,13 @@ def rename_file(old_name, new_name):
     """Renames a file and handles potential errors."""
     try:
         os.rename(old_name, new_name)
-        print(f"[提示] 已重命名文件至 {new_name}")
+        print(f"\033[92m[提示] 已重命名文件至 {new_name}\033[0m")
     except FileNotFoundError:
-        print(f"[错误] 文件不存在: {old_name}")
+        print(f"\033[91m[错误] 文件不存在: {old_name}\033[0m")
     except PermissionError:
-        print(f"[错误] 无法重命名文件，权限不足: {old_name}")
+        print(f"\033[91m[错误] 无法重命名文件，权限不足: {old_name}\033[0m")
     except Exception as e:
-        print(f"[错误] 未知错误: {e}")
+        print(f"\033[91m[错误] 未知错误: {e}\033[0m")
 
 def create_default_config():
     """Creates a default configuration file if it doesn't exist."""
@@ -53,14 +53,18 @@ def parse_config():
                 file_data[key].append(file)
                 current_key = key
             except ValueError:
-                raise ValueError(f"[错误] 配置文件第{line_num}行格式错误: {line}")
+                raise ValueError(f"\033[91m[错误] 配置文件第{line_num}行格式错误: {line}\033[0m")
         elif line.startswith("^"):
             if not current_key:
-                raise ValueError(f"[错误] 配置文件第{line_num}行没有主键用于关联: {line}")
+                raise ValueError(f"\033[91m[错误] 配置文件第{line_num}行没有主键用于关联: {line}\033[0m")
             file = file_prefix + line[1:].strip()
             file_data[current_key].append(file)
+        elif "." in line:
+            display = line.split(".", 1)[1]
+            color = line.split(".")[0]
+            display_data.append(f"\033[{color}m{display}\n")
         else:
-            raise ValueError(f"[错误] 配置文件第{line_num}行无法识别: {line}")
+            raise ValueError(f"\033[91m[错误] 配置文件第{line_num}行无法识别: {line}\033[0m")
 
     return display_data, file_data
 
@@ -76,7 +80,7 @@ def main():
     input_prompt = display_data.pop(-1)[:-1]
 
     while True:
-        clear_screen()
+        #clear_screen()
         for line in display_data:
             print(line, end="")
         user_input = input(input_prompt)
@@ -92,12 +96,12 @@ def main():
                     rename_file(file + ".disabled", file)
                     enabled_files_cnt += 1
                 elif os.path.exists(file) or os.path.exists(file + ".disabled"):
-                    print(f"[提示] 略过了：{file}")
+                    print(f"\033[93m[提示] 略过了：{file}\033[0m")
                 else:
-                    print(f"[错误] 文件不存在: {file}")
-            input(f"[提示] 操作完成，启用了{enabled_files_cnt}个文件，禁用了{disabled_files_cnt}个文件。按回车继续...")
+                    print(f"\033[91m[错误] 文件不存在: {file}\033[0m")
+            input(f"\033[92m[提示] 操作完成，启用了{enabled_files_cnt}个文件，禁用了{disabled_files_cnt}个文件。按回车继续...\033[0m")
         else:
-            input("[提示] 无效输入，请重试...")
+            input("\033[93m[提示] 无效输入，请重试...\033[0m")
 
 if __name__ == "__main__":
     main()
