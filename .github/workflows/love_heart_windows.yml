@@ -19,4 +19,4 @@ jobs:
           python_ver: '3.12'
           spec: 'love_heart.py'
           upload_exe_with_name: 'disable_helper'
-          options: --onefile, --name "disable_helper",
+          options: --onefile, --name "disable_helper", --windowed, 
